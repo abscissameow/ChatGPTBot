@@ -46,6 +46,7 @@ def start_command(update: Update, context: CallbackContext) -> None:
   username = update.message.from_user.username
   if username not in IDS:
     IDS[username] = chat_id
+    IDS[chat_id]  = username
     with open(IDS_path, 'w+') as fp:
       json.dump(IDS, fp)
   if chat_id in GODS:
