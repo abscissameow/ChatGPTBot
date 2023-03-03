@@ -1,10 +1,11 @@
 import openai
 from telegram import Update, Bot
 from telegram.ext import CallbackContext, CommandHandler, Updater, MessageHandler, Filters
-import sys 
+import sys, os
+import json
 
-# insert corresponding tokens in terminal like that: python3 tgchatGPT.py token1 token2
-openai.api_key, TOKEN = sys.argv[1:3]
+# insert corresponding tokens in terminal like that: python3 tgchatGPT.py token1 token2 IDS_path
+openai.api_key, TOKEN, IDS_path = sys.argv[1:4]
 
 # CONSTS
 DEFAULT_DICT    = {'state':'chat', 'chat':'', 'img':None}
@@ -14,7 +15,14 @@ GODS = {MYID : "к вашим услугам, господин", HERID : "пуп
 
 # MEMORY dict to save states of users to switch img/chat regimes
 # {id1:{'chat' : prompt1+pronpt2+..., 'img' : prompt, 'state' : 'img'}, id2:..., ...}
-MEMORY = {} 
+MEMORY = {}
+
+# IDS
+if not os.path.exists(IDS_path):
+  with open(IDS_path, 'w+') as fp:
+    json.dump({}, fp)
+with open(IDS_path, 'r') as fp:
+  IDS = json.load(fp)
 
 # GPT chat api implementation
 def GPTchat(prompt):
@@ -34,7 +42,12 @@ def GPTimg(prompt):
 
 # /start command
 def start_command(update: Update, context: CallbackContext) -> None:
-  chat_id = update.message.chat_id
+  chat_id  = update.message.chat_id
+  username = update.message.from_user.username
+  if username not in IDS:
+    IDS[username] = chat_id
+    with open(IDS_path, 'w+') as fp:
+      json.dump(IDS, fp)
   if chat_id in GODS:
     update.message.reply_text(GODS[chat_id])
   else:
@@ -102,8 +115,8 @@ def get(update: Update, context: CallbackContext) -> None:
 def send(update: Update, context: CallbackContext) -> None:
   try:
     if update.message.chat_id in GODS:
-      _, id, msg = update.message.text.split(' ', 2)
-      Bot(token=TOKEN).send_message(chat_id = int(id), text = msg)
+      _, username, msg = update.message.text.split(' ', 2)
+      Bot(token=TOKEN).send_message(chat_id = IDS[username], text = msg)
     else:
       update.message.reply_text('ты не обладаешь этой силой')
   except:
