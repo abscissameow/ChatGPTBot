@@ -78,7 +78,8 @@ def handleGPT(update: Update, context: CallbackContext):
       MEMORY[chat_id]['chat'] += '\n\n' + answer + '\n\n'
       update.message.reply_text(answer)
 
-  except:
+  except Exception as e:
+    print(e)
     update.message.reply_text('я сломалосб')
 
 # auxikiary staff
