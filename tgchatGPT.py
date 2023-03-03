@@ -1,10 +1,12 @@
 import openai
 from telegram import Update, Bot
 from telegram.ext import CallbackContext, CommandHandler, Updater, MessageHandler, Filters
+import sys 
+
+# insert corresponding tokens in terminal like that: python3 tgchatGPT.py token1 token2
+openai.api_key, TOKEN = sys.argv[1:3]
 
 # CONSTS
-openai.api_key  = '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'
-TOKEN           = '5818439147:AAFAbali15C3M-OMl3JSI2SNdpIYlnfo0Vo'
 DEFAULT_DICT    = {'state':'chat', 'chat':'', 'img':None}
 MEMORY_REQUESTS = 5  
 MYID, HERID = 283460642, 284672038
