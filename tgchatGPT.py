@@ -99,12 +99,15 @@ def get(update: Update, context: CallbackContext) -> None:
         for n,key in enumerate(MEMORY)]))
   else:
     update.message.reply_text('ты не обладаешь этой силой')
-def bubl(update: Update, context: CallbackContext) -> None:
-  msgs = update.message.text.split(' ',1)
-  if len(msgs) == 2:
-    Bot(token=TOKEN).send_message(chat_id = HERID, text = msgs[1])
-  else:
-    Bot(token=TOKEN).send_message(chat_id = HERID, text = 'бубл')
+def send(update: Update, context: CallbackContext) -> None:
+  try:
+    if update.message.chat_id in GODS:
+      _, id, msg = update.message.text.split(' ', 2)
+      Bot(token=TOKEN).send_message(chat_id = int(id), text = msg)
+    else:
+      update.message.reply_text('ты не обладаешь этой силой')
+  except:
+    pass
 
 # put all together and start pooling
 handlers = [
@@ -113,7 +116,7 @@ handlers = [
   CommandHandler('img', img),
   CommandHandler('void', void),
   CommandHandler('get', get),
-  CommandHandler('bubl', bubl),
+  CommandHandler('send', send),
   MessageHandler(Filters.all, handleGPT),
 ]
 updater = Updater(TOKEN, workers=100)
