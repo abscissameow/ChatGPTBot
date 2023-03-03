@@ -3,10 +3,10 @@ from telegram import Update, Bot
 from telegram.ext import CallbackContext, CommandHandler, Updater, MessageHandler, Filters
 
 # CONSTS
-openai.api_key  = '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'
+openai.api_key  = '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'
 TOKEN           = '5818439147:AAFAbali15C3M-OMl3JSI2SNdpIYlnfo0Vo'
 DEFAULT_DICT    = {'state':'chat', 'chat':'', 'img':None}
-MEMORY_REQUESTS = 5
+MEMORY_REQUESTS = 5  
 MYID, HERID = 283460642, 284672038
 GODS = {MYID : "к вашим услугам, господин", HERID : "пупсопривив"}
 
