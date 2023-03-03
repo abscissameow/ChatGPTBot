@@ -80,7 +80,6 @@ def handleGPT(update: Update, context: CallbackContext):
 
   except:
     update.message.reply_text('я сломалосб')
-    MEMORY.pop(chat_id, None)
 
 # auxikiary staff
 def void(update: Update, context: CallbackContext) -> None:
