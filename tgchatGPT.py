@@ -25,8 +25,8 @@ with open(IDS_path, 'r') as fp:
   IDS = json.load(fp)
 def fill(chat_id, username):
   if username not in IDS:
-    IDS[username] = chat_id
-    IDS[chat_id]  = username
+    IDS[username]     = chat_id
+    IDS[str(chat_id)] = username
     with open(IDS_path, 'w+') as fp:
       json.dump(IDS, fp)
   if chat_id not in MEMORY:
@@ -113,7 +113,7 @@ def void(update: Update, context: CallbackContext) -> None:
 def get(update: Update, context: CallbackContext) -> None:
   if update.message.chat_id in GODS:
     update.message.reply_text("\n————————————————————\n".join(
-      [f"{n+1}) {IDS[key]}\n\n chat: {MEMORY[key]['chat']} - - - \n img: {MEMORY[key]['img']}" 
+      [f"{n+1}) {IDS[str(key)]}\n\n chat: {MEMORY[key]['chat']} - - - \n img: {MEMORY[key]['img']}" 
         for n,key in enumerate(MEMORY)]))
   else:
     update.message.reply_text('ты не обладаешь этой силой')
