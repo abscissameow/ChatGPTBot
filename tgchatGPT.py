@@ -23,6 +23,15 @@ if not os.path.exists(IDS_path):
     json.dump({}, fp)
 with open(IDS_path, 'r') as fp:
   IDS = json.load(fp)
+def fill(chat_id, username):
+  if username not in IDS:
+    IDS[username] = chat_id
+    IDS[chat_id]  = username
+    with open(IDS_path, 'w+') as fp:
+      json.dump(IDS, fp)
+  if chat_id not in MEMORY:
+    MEMORY[chat_id] = DEFAULT_DICT.copy()
+  
 
 # GPT chat api implementation
 def GPTchat(prompt):
@@ -44,30 +53,25 @@ def GPTimg(prompt):
 def start_command(update: Update, context: CallbackContext) -> None:
   chat_id  = update.message.chat_id
   username = update.message.from_user.username
-  if username not in IDS:
-    IDS[username] = chat_id
-    IDS[chat_id]  = username
-    with open(IDS_path, 'w+') as fp:
-      json.dump(IDS, fp)
+  fill(chat_id, username)
   if chat_id in GODS:
     update.message.reply_text(GODS[chat_id])
   else:
     update.message.reply_text('ну, чего тебе?')
-  MEMORY[chat_id] = DEFAULT_DICT.copy()
 
 # /img command
 def img(update: Update, context: CallbackContext) -> None:
-  chat_id = update.message.chat_id
-  if chat_id not in MEMORY:
-    MEMORY[chat_id] = DEFAULT_DICT.copy()
+  chat_id  = update.message.chat_id 
+  fill(chat_id, update.message.from_user.username)
+
   MEMORY[chat_id]['state'] = 'img'
   update.message.reply_text('рисоватб: ON')
 
 # /chat command
 def chat(update: Update, context: CallbackContext) -> None:
   chat_id = update.message.chat_id
-  if chat_id not in MEMORY:
-    MEMORY[chat_id] = DEFAULT_DICT.copy()
+  fill(chat_id, update.message.from_user.username)
+
   MEMORY[chat_id]['state'] = 'chat'
   update.message.reply_text('чатб: ON')
 
@@ -75,9 +79,9 @@ def chat(update: Update, context: CallbackContext) -> None:
 def handleGPT(update: Update, context: CallbackContext):
   try:
     chat_id = update.message.chat_id
+    fill(chat_id, update.message.from_user.username)
+
     prompt  = update.message.text.lower()
-    if chat_id not in MEMORY:
-      MEMORY[chat_id] = DEFAULT_DICT.copy()
 
     # using GPT image api
     if MEMORY[chat_id]['state'] == 'img':
