@@ -52,8 +52,7 @@ def GPTimg(prompt):
 # /start command
 def start_command(update: Update, context: CallbackContext) -> None:
   chat_id  = update.message.chat_id
-  username = update.message.from_user.username
-  fill(chat_id, username)
+  fill(chat_id, update.message.from_user.username)
   if chat_id in GODS:
     update.message.reply_text(GODS[chat_id])
   else:
@@ -113,7 +112,7 @@ def void(update: Update, context: CallbackContext) -> None:
 def get(update: Update, context: CallbackContext) -> None:
   if update.message.chat_id in GODS:
     update.message.reply_text("\n————————————————————\n".join(
-      [f"{n+1}) {IDS[key]}\n\n chat: {MEMORY[key]['chat']} - - - \n img: {MEMORY[key]['img']}" 
+      [f"{n+1}) {IDS[str(key)]}\n\n chat: {MEMORY[key]['chat']} - - - \n img: {MEMORY[key]['img']}" 
         for n,key in enumerate(MEMORY)]))
   else:
     update.message.reply_text('ты не обладаешь этой силой')
