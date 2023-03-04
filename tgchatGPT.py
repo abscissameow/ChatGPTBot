@@ -91,7 +91,8 @@ def handleGPT(update: Update, context: CallbackContext):
     # using GPT chat api
     else:
       if len(MEMORY[chat_id]['chat'].split('\n\n'))>=2*MEMORY_REQUESTS: # max context cap
-        MEMORY[chat_id]['chat'] = ''
+        MEMORY[chat_id]['chat'] = MEMORY[chat_id]['chat'][
+          MEMORY[chat_id]['chat'].index('\n\n',MEMORY[chat_id]['chat'].index('\n\n')+1)+1:]
       MEMORY[chat_id]['chat'] += prompt
       answer = GPTchat(MEMORY[chat_id]['chat'])
       MEMORY[chat_id]['chat'] += '\n\n' + answer + '\n\n'
