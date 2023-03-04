@@ -90,7 +90,8 @@ def handleGPT(update: Update, context: CallbackContext):
 
     # using GPT chat api
     else:
-      if len(MEMORY[chat_id]['chat'].split('\n\n'))>=2*MEMORY_REQUESTS: # max context cap
+      if (len(MEMORY[chat_id]['chat'].split('\n\n'))>=2*MEMORY_REQUESTS)\
+          or len(MEMORY[chat_id]['chat'])>3500: # max context cap
         MEMORY[chat_id]['chat'] = MEMORY[chat_id]['chat'][
           MEMORY[chat_id]['chat'].index('\n\n',MEMORY[chat_id]['chat'].index('\n\n')+1)+1:]
       MEMORY[chat_id]['chat'] += prompt
@@ -112,9 +113,12 @@ def void(update: Update, context: CallbackContext) -> None:
     update.message.reply_text('ты не обладаешь этой силой')
 def get(update: Update, context: CallbackContext) -> None:
   if update.message.chat_id in GODS:
+    sep = '\n\n'
     update.message.reply_text("\n————————————————————\n".join(
-      [f"{n+1}) {IDS[str(key)]}\n\n chat: {MEMORY[key]['chat']} - - - \n img: {MEMORY[key]['img']}" 
-        for n,key in enumerate(MEMORY)]))
+      [f"{n+1}) {IDS[str(key)]}{sep} \
+       chat: {sep.join(MEMORY[key]['chat'].split(sep)[-4:])} - - - \n\
+       img: {MEMORY[key]['img']}" for n,key in enumerate(MEMORY)])[:4000]
+       )
   else:
     update.message.reply_text('ты не обладаешь этой силой')
 def send(update: Update, context: CallbackContext) -> None:
