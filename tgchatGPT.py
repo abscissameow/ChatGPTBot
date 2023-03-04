@@ -115,10 +115,8 @@ def get(update: Update, context: CallbackContext) -> None:
   if update.message.chat_id in GODS:
     sep = '\n\n'
     update.message.reply_text("\n————————————————————\n".join(
-      [f"{n+1}) {IDS[str(key)]}{sep} \
-       chat: {sep.join(MEMORY[key]['chat'].split(sep)[-4:])} - - - \n\
-       img: {MEMORY[key]['img']}" for n,key in enumerate(MEMORY)])[:4000]
-       )
+      [f"{n+1}) {IDS[str(key)]}{sep}chat: {sep.join(MEMORY[key]['chat'].split(sep)[-5:])}\
+        - - - \nimg: {MEMORY[key]['img']}" for n,key in enumerate(MEMORY)])[:4000])
   else:
     update.message.reply_text('ты не обладаешь этой силой')
 def send(update: Update, context: CallbackContext) -> None:
