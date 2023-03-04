@@ -9,7 +9,7 @@ openai.api_key, TOKEN, IDS_path = sys.argv[1:4]
 
 # CONSTS
 DEFAULT_DICT    = {'state':'chat', 'chat':'', 'img':None}
-MEMORY_REQUESTS = 5  
+MEMORY_REQUESTS = 10
 MYID, HERID = 283460642, 284672038
 GODS = {MYID : "к вашим услугам, господин", HERID : "пупсопривив"}
 
