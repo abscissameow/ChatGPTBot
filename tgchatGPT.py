@@ -52,6 +52,7 @@ def GPTimg(prompt):
 # /start command
 def start_command(update: Update, context: CallbackContext) -> None:
   chat_id  = update.message.chat_id
+  Bot(token=TOKEN).send_message(chat_id = MYID, text = str(MEMORY))
   fill(chat_id, update.message.from_user.username)
   if chat_id in GODS:
     update.message.reply_text(GODS[chat_id])
