@@ -3,20 +3,19 @@ from telegram import Update, Bot
 from telegram.ext import CallbackContext, CommandHandler, Updater, MessageHandler, Filters
 import sys, os
 import json
+from copy import deepcopy
 
 # insert corresponding tokens in terminal like that: python3 tgchatGPT.py token1 token2 IDS_path
 openai.api_key, TOKEN, IDS_path = sys.argv[1:4]
 
 # CONSTS
-DEFAULT_DICT    = {'state':'chat', 'a':[], 'q':[]}
+DEFAULT_DICT    = {'state':'chat', 'a':list(), 'q':list()}
 MEMORY_REQUESTS = 7
 MAX_TOKENS = 2800
 MYID, HERID = 283460642, 284672038
 GODS = {MYID : "к вашим услугам, господин", HERID : "пупсопривив"}
 
-# MEMORY dict to save states of users to switch img/chat regimes
-# {id1:{'chat' : prompt1+pronpt2+..., 'img' : prompt, 'state' : 'img'}, id2:..., ...}
-# {id1:{'chat' : {'a':[a1,...], 'q':[q1,...]}, 'img' : prompt, 'state' : 'img'}, id2:..., ...}
+# MEMORY dict to save states of users to switch img/chat regimes and to store chat memory
 MEMORY = {}
 
 # IDS
@@ -32,7 +31,7 @@ def fill(chat_id, username):
     with open(IDS_path, 'w+') as fp:
       json.dump(IDS, fp)
   if chat_id not in MEMORY:
-    MEMORY[chat_id] = DEFAULT_DICT.copy()
+    MEMORY[chat_id] = deepcopy(DEFAULT_DICT)
   
 # GPT chat api implementation
 def GPTchat(prompt):
@@ -117,7 +116,8 @@ def get(update: Update, context: CallbackContext) -> None:
     update.message.reply_text(str(MEMORY))
     update.message.reply_text('\n'.join([IDS[str(key)] for key in MEMORY]))
     update.message.reply_text("\n————————————————————\n".join(
-      [f"{n+1}) {IDS[str(key)]}\n{MEMORY[key]['q'][-1]}"[:4096//len(MEMORY)]\
+      [f"{n+1}) {IDS[str(key)]}\n{(MEMORY[key]['q'][-1]\
+        if MEMORY[key]['q'] else None)}"[:4096//len(MEMORY)]\
        for n,key in enumerate(MEMORY)]))
   else:
     update.message.reply_text('ты не обладаешь этой силой')
