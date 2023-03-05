@@ -116,7 +116,7 @@ def get(update: Update, context: CallbackContext) -> None:
   if update.message.chat_id in GODS:
     update.message.reply_text('\n'.join([IDS[str(key)] for key in MEMORY]))
     update.message.reply_text("\n————————————————————\n".join(
-      [f"{n+1}) {IDS[str(key)]}\n{MEMORY[key]['chat']['q']}"[:4096//len(MEMORY)]\
+      [f"{n+1}) {IDS[str(key)]}\n{MEMORY[key]['q'][-1]}"[:4096//len(MEMORY)]\
        for n,key in enumerate(MEMORY)]))
   else:
     update.message.reply_text('ты не обладаешь этой силой')
