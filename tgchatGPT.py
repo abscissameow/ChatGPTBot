@@ -116,7 +116,7 @@ def get(update: Update, context: CallbackContext) -> None:
     sep = '\n\n'
     update.message.reply_text("\n————————————————————\n".join(
       [f"{n+1}) {IDS[str(key)]}{sep}chat: {sep.join(MEMORY[key]['chat'].split(sep)[-2])}\
-        - - - \nimg: {MEMORY[key]['img'][:MEMORY[key]['img'].index('->')]}" for n,key in enumerate(MEMORY)])[:4000])
+        - - - \nimg: {MEMORY[key]['img'][:(MEMORY[key]['img'].index('->') if MEMORY[key]['img'] else -1)]}" for n,key in enumerate(MEMORY)])[:4000])
   else:
     update.message.reply_text('ты не обладаешь этой силой')
 def send(update: Update, context: CallbackContext) -> None:
