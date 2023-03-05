@@ -115,7 +115,7 @@ def get(update: Update, context: CallbackContext) -> None:
   if update.message.chat_id in GODS:
     sep = '\n\n'
     update.message.reply_text("\n————————————————————\n".join(
-      [f"{n+1}) {IDS[str(key)]}{sep}chat: {MEMORY[key]['chat'].split(sep)[-2] if MEMORY[key]['chat'] else ''}\
+      [f"{n+1}) {IDS[str(key)]}{sep}chat: {MEMORY[key]['chat'].split(sep)[-3] if MEMORY[key]['chat'] else ''}\
         - - - \nimg: {(MEMORY[key]['img'][:MEMORY[key]['img'].index('->')] if MEMORY[key]['img'] else '')}" for n,key in enumerate(MEMORY)])[:4000])
   else:
     update.message.reply_text('ты не обладаешь этой силой')
