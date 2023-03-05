@@ -8,13 +8,15 @@ import json
 openai.api_key, TOKEN, IDS_path = sys.argv[1:4]
 
 # CONSTS
-DEFAULT_DICT    = {'state':'chat', 'chat':'', 'img':None}
+DEFAULT_DICT    = {'state':'chat', 'a':[], 'q':[]}
 MEMORY_REQUESTS = 7
+MAX_TOKENS = 2800
 MYID, HERID = 283460642, 284672038
 GODS = {MYID : "к вашим услугам, господин", HERID : "пупсопривив"}
 
 # MEMORY dict to save states of users to switch img/chat regimes
 # {id1:{'chat' : prompt1+pronpt2+..., 'img' : prompt, 'state' : 'img'}, id2:..., ...}
+# {id1:{'chat' : {'a':[a1,...], 'q':[q1,...]}, 'img' : prompt, 'state' : 'img'}, id2:..., ...}
 MEMORY = {}
 
 # IDS
@@ -71,27 +73,33 @@ def chat(update: Update, context: CallbackContext) -> None:
   MEMORY[chat_id]['state'] = 'chat'
   update.message.reply_text('чатб: ON')
 
+def _cap_memory(id):
+  T = len(''.join(MEMORY[id]['q']+MEMORY[id]['a']).split())
+  if len(MEMORY[id]['q']) >= MEMORY_REQUESTS or T > MAX_TOKENS:
+    MEMORY[id]['a'].pop(0)
+    MEMORY[id]['q'].pop(0)
+    _cap_memory(id)
 # handler for any text
 def handleGPT(update: Update, context: CallbackContext):
   try:
     chat_id = update.message.chat_id
+    msg     = update.message.text.lower()
     fill(chat_id, update.message.from_user.username)
-    prompt  = update.message.text.lower()
+
     # using GPT image api
     if MEMORY[chat_id]['state'] == 'img':
-      image = GPTimg(prompt)
-      MEMORY[chat_id]['img'] = prompt +' -> '+ image
-      update.message.reply_text(image)
+      update.message.reply_text(GPTimg(msg))
+      
     # using GPT chat api
     else:
-      if (len(MEMORY[chat_id]['chat'].split('\n\n'))>=2*MEMORY_REQUESTS)\
-          or len(MEMORY[chat_id]['chat'])>2800: # max context cap
-        MEMORY[chat_id]['chat'] = MEMORY[chat_id]['chat'][
-          MEMORY[chat_id]['chat'].index('\n\n',MEMORY[chat_id]['chat'].index('\n\n')+1)+1:]
-      MEMORY[chat_id]['chat'] += prompt
-      answer = GPTchat(MEMORY[chat_id]['chat'])
-      MEMORY[chat_id]['chat'] += '\n\n' + answer + '\n\n'
+      _cap_memory(chat_id)
+      prompt = '\n'.join([i for j in zip(MEMORY[chat_id]['q'],MEMORY[chat_id]['a'])\
+                            for i in j]) + '\n' + msg
+      answer = GPTchat(prompt)
+      MEMORY[chat_id]['q'].append(msg)
+      MEMORY[chat_id]['a'].append(answer)
       update.message.reply_text(answer)
+
   except Exception as e:
     print(e)
     update.message.reply_text('я сломалосб')
@@ -106,12 +114,10 @@ def void(update: Update, context: CallbackContext) -> None:
     update.message.reply_text('ты не обладаешь этой силой')
 def get(update: Update, context: CallbackContext) -> None:
   if update.message.chat_id in GODS:
-    sep = '\n\n'
+    update.message.reply_text('\n'.join([IDS[str(key)] for key in MEMORY]))
     update.message.reply_text("\n————————————————————\n".join(
-      [f"{n+1}) {IDS[str(key)]}{sep}\
-       chat: {MEMORY[key]['chat'].split(sep)[-3] if MEMORY[key]['chat'] else ''}\n - - - \n\
-       img: {(MEMORY[key]['img'][:MEMORY[key]['img'].index('->')] if MEMORY[key]['img'] else '')}"\
-       for n,key in enumerate(MEMORY)])[:4000])
+      [f"{n+1}) {IDS[str(key)]}\n{MEMORY[key]['chat']['q']}"[:4096//len(MEMORY)]\
+       for n,key in enumerate(MEMORY)]))
   else:
     update.message.reply_text('ты не обладаешь этой силой')
 def send(update: Update, context: CallbackContext) -> None:
