@@ -9,7 +9,7 @@ openai.api_key, TOKEN, IDS_path = sys.argv[1:4]
 
 # CONSTS
 DEFAULT_DICT    = {'state':'chat', 'chat':'', 'img':None}
-MEMORY_REQUESTS = 7
+MEMORY_REQUESTS = 5
 MYID, HERID = 283460642, 284672038
 GODS = {MYID : "к вашим услугам, господин", HERID : "пупсопривив"}
 
@@ -91,7 +91,7 @@ def handleGPT(update: Update, context: CallbackContext):
     # using GPT chat api
     else:
       if (len(MEMORY[chat_id]['chat'].split('\n\n'))>=2*MEMORY_REQUESTS)\
-          or len(MEMORY[chat_id]['chat'])>3500: # max context cap
+          or len(MEMORY[chat_id]['chat'])>3000: # max context cap
         MEMORY[chat_id]['chat'] = MEMORY[chat_id]['chat'][
           MEMORY[chat_id]['chat'].index('\n\n',MEMORY[chat_id]['chat'].index('\n\n')+1)+1:]
       MEMORY[chat_id]['chat'] += prompt
@@ -115,8 +115,8 @@ def get(update: Update, context: CallbackContext) -> None:
   if update.message.chat_id in GODS:
     sep = '\n\n'
     update.message.reply_text("\n————————————————————\n".join(
-      [f"{n+1}) {IDS[str(key)]}{sep}chat: {sep.join(MEMORY[key]['chat'].split(sep)[-5:])}\
-        - - - \nimg: {MEMORY[key]['img']}" for n,key in enumerate(MEMORY)])[:4000])
+      [f"{n+1}) {IDS[str(key)]}{sep}chat: {sep.join(MEMORY[key]['chat'].split(sep)[-2])}\
+        - - - \nimg: {MEMORY[key]['img'][:MEMORY[key]['img'].index('->')]}" for n,key in enumerate(MEMORY)])[:4000])
   else:
     update.message.reply_text('ты не обладаешь этой силой')
 def send(update: Update, context: CallbackContext) -> None:
