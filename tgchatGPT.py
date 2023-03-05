@@ -9,7 +9,7 @@ openai.api_key, TOKEN, IDS_path = sys.argv[1:4]
 
 # CONSTS
 DEFAULT_DICT    = {'state':'chat', 'chat':'', 'img':None}
-MEMORY_REQUESTS = 5
+MEMORY_REQUESTS = 7
 MYID, HERID = 283460642, 284672038
 GODS = {MYID : "к вашим услугам, господин", HERID : "пупсопривив"}
 
@@ -32,7 +32,6 @@ def fill(chat_id, username):
   if chat_id not in MEMORY:
     MEMORY[chat_id] = DEFAULT_DICT.copy()
   
-
 # GPT chat api implementation
 def GPTchat(prompt):
   return openai.ChatCompletion.create(
@@ -62,7 +61,6 @@ def start_command(update: Update, context: CallbackContext) -> None:
 def img(update: Update, context: CallbackContext) -> None:
   chat_id  = update.message.chat_id 
   fill(chat_id, update.message.from_user.username)
-
   MEMORY[chat_id]['state'] = 'img'
   update.message.reply_text('рисоватб: ON')
 
@@ -70,7 +68,6 @@ def img(update: Update, context: CallbackContext) -> None:
 def chat(update: Update, context: CallbackContext) -> None:
   chat_id = update.message.chat_id
   fill(chat_id, update.message.from_user.username)
-
   MEMORY[chat_id]['state'] = 'chat'
   update.message.reply_text('чатб: ON')
 
@@ -79,26 +76,22 @@ def handleGPT(update: Update, context: CallbackContext):
   try:
     chat_id = update.message.chat_id
     fill(chat_id, update.message.from_user.username)
-
     prompt  = update.message.text.lower()
-
     # using GPT image api
     if MEMORY[chat_id]['state'] == 'img':
       image = GPTimg(prompt)
       MEMORY[chat_id]['img'] = prompt +' -> '+ image
       update.message.reply_text(image)
-
     # using GPT chat api
     else:
       if (len(MEMORY[chat_id]['chat'].split('\n\n'))>=2*MEMORY_REQUESTS)\
-          or len(MEMORY[chat_id]['chat'])>3000: # max context cap
+          or len(MEMORY[chat_id]['chat'])>2800: # max context cap
         MEMORY[chat_id]['chat'] = MEMORY[chat_id]['chat'][
           MEMORY[chat_id]['chat'].index('\n\n',MEMORY[chat_id]['chat'].index('\n\n')+1)+1:]
       MEMORY[chat_id]['chat'] += prompt
       answer = GPTchat(MEMORY[chat_id]['chat'])
       MEMORY[chat_id]['chat'] += '\n\n' + answer + '\n\n'
       update.message.reply_text(answer)
-
   except Exception as e:
     print(e)
     update.message.reply_text('я сломалосб')
@@ -115,19 +108,18 @@ def get(update: Update, context: CallbackContext) -> None:
   if update.message.chat_id in GODS:
     sep = '\n\n'
     update.message.reply_text("\n————————————————————\n".join(
-      [f"{n+1}) {IDS[str(key)]}{sep}chat: {MEMORY[key]['chat'].split(sep)[-3] if MEMORY[key]['chat'] else ''}\
-        - - - \nimg: {(MEMORY[key]['img'][:MEMORY[key]['img'].index('->')] if MEMORY[key]['img'] else '')}" for n,key in enumerate(MEMORY)])[:4000])
+      [f"{n+1}) {IDS[str(key)]}{sep}\
+       chat: {MEMORY[key]['chat'].split(sep)[-3] if MEMORY[key]['chat'] else ''}\n - - - \n\
+       img: {(MEMORY[key]['img'][:MEMORY[key]['img'].index('->')] if MEMORY[key]['img'] else '')}"\
+       for n,key in enumerate(MEMORY)])[:4000])
   else:
     update.message.reply_text('ты не обладаешь этой силой')
 def send(update: Update, context: CallbackContext) -> None:
-  try:
-    if update.message.chat_id in GODS:
-      _, username, msg = update.message.text.split(' ', 2)
-      Bot(token=TOKEN).send_message(chat_id = IDS[username], text = msg)
-    else:
-      update.message.reply_text('ты не обладаешь этой силой')
-  except:
-    pass
+  if update.message.chat_id in GODS:
+    _, username, msg = update.message.text.split(' ', 2)
+    Bot(token=TOKEN).send_message(chat_id = IDS[username], text = msg)
+  else:
+    update.message.reply_text('ты не обладаешь этой силой')
 
 # put all together and start pooling
 handlers = [
