@@ -100,7 +100,7 @@ def handleGPT(update: Update, context: CallbackContext):
       update.message.reply_text(answer)
 
   except Exception as e:
-    update.message.reply_text('я сломалосб:\n' + e)
+    update.message.reply_text('я сломалосб:\n' + str(e))
 
 # auxikiary staff
 def void(update: Update, context: CallbackContext) -> None:
