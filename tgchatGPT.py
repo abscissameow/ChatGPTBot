@@ -26,8 +26,8 @@ with open(IDS_path, 'r') as fp:
   IDS = json.load(fp)
 def fill(chat_id, username):
   if username not in IDS:
-    IDS[username]     = chat_id
-    IDS[str(chat_id)] = username
+    IDS[str(username)] = chat_id
+    IDS[str(chat_id) ] = str(username)
     with open(IDS_path, 'w+') as fp:
       json.dump(IDS, fp)
   if chat_id not in MEMORY:
