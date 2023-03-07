@@ -100,8 +100,7 @@ def handleGPT(update: Update, context: CallbackContext):
       update.message.reply_text(answer)
 
   except Exception as e:
-    print(e)
-    update.message.reply_text('я сломалосб')
+    update.message.reply_text('я сломалосб:\n' + e)
 
 # auxikiary staff
 def void(update: Update, context: CallbackContext) -> None:
@@ -113,7 +112,7 @@ def void(update: Update, context: CallbackContext) -> None:
     update.message.reply_text('ты не обладаешь этой силой')
 def get(update: Update, context: CallbackContext) -> None:
   if update.message.chat_id in GODS:
-    users = '\n'.join([IDS[str(key)] for key in MEMORY])
+    users = '\n'.join([IDS[str(key)]+' : '+str(len(MEMORY[key]['q'])) for key in MEMORY])
     if not users:
       update.message.reply_text('одиноко...')
     else:
