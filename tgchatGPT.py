@@ -121,22 +121,28 @@ def handleAudio(update: Update, context: CallbackContext):
   try:
     chat_id = update.message.chat_id
     fill(chat_id, update.message.from_user.username)
-    tempPath = f'temp/{chat_id}.mp3'
 
+    tempPath = f'temp/{chat_id}.mp3'
     if not os.path.exists(tempPath): 
-      with open(tempPath, 'w'): pass
-    update.message.voice.get_file().download(tempPath) # get .ogg
+      with open(tempPath, 'w'): pass # create temp file
+    update.message.voice.get_file().download(tempPath) # get .ogg voice file
     AudioSegment.from_ogg(tempPath).export(tempPath, format="mp3") # convert .ogg to .mp3:
-    with open(tempPath, 'rb') as fp: # .mp3 to (en) text
-      text = openai.Audio.translate("whisper-1", fp)['text'] + "\nОтветь на русском языке"
-    
-    answer = _handle_memory_chat(chat_id, text)
-    if text.split()[0].lower() in ['write', 'print', 'type']: # if user wants to get text reply:
-      update.message.reply_text(answer)
-    else:
-      gTTS(answer, lang='ru').save(tempPath) # generate voice response
+    with open(tempPath, 'rb') as fp: prompt = openai.Audio.translate("whisper-1", fp)['text']
+
+    # reply with text/pic/voice depending on first_word:
+    first_word = prompt.split()[0].lower()
+
+    if first_word in ['write', 'print', 'type']: # txt
+      update.message.reply_text(_handle_memory_chat(chat_id, prompt+"\nОтветь на русском языке"))
+
+    elif first_word in ['draw', 'paint', 'picture']: # pic
+      update.message.reply_text(GPTimg(prompt))
+
+    else: # voice
+      gTTS(update.message.reply_text(_handle_memory_chat(chat_id, prompt+"\nОтветь на русском языке")),
+           lang='ru', slow=False, lang_check=False).save(tempPath)    # generate voice response
       with open(tempPath, 'rb') as fp: update.message.reply_voice(fp) # reply voice
-      os.remove(tempPath)
+      os.remove(tempPath) # remove temp file
   except Exception as e:
     update.message.reply_text('я сломалосб:\n' + str(e))
 
