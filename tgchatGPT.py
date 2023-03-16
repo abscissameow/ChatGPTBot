@@ -16,12 +16,6 @@ MEMORY_REQUESTS = 7
 MAX_TOKENS = 2800
 MYID, HERID = 283460642, 284672038
 GODS = {MYID : "к вашим услугам, господин", HERID : "пупсопривив"}
-RUSSIAN = set([chr(ord('а')+i) for i in range(32)])
-def contains_russian(text):
-  for i in text:
-    if i in RUSSIAN:
-      return True
-  return False
 if not os.path.exists('./temp'): os.makedirs("./temp")
 
 # MEMORY dict to save states of users to switch img/chat regimes and to store chat memory
