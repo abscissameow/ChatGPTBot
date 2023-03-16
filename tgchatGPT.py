@@ -20,6 +20,7 @@ if not os.path.exists('./temp'): os.makedirs("./temp")
 
 # MEMORY dict to save states of users to switch img/chat regimes and to store chat memory
 MEMORY = {}
+if os.path.exists('temp/MEMORY.json'): os.remove('temp/MEMORY.json')
 
 # IDS
 if not os.path.exists(IDS_path):
@@ -145,6 +146,7 @@ def void(update: Update, context: CallbackContext) -> None:
   if update.message.chat_id in GODS:
     global MEMORY
     MEMORY = {}
+    if os.path.exists('temp/MEMORY.json'): os.remove('temp/MEMORY.json')
     update.message.reply_text('души свободны')
   else:
     update.message.reply_text('ты не обладаешь этой силой')
@@ -154,6 +156,7 @@ def get(update: Update, context: CallbackContext) -> None:
     if not users:
       update.message.reply_text('одиноко...')
     else:
+      with open('temp/MEMORY.json', 'w+') as f: json.dump(MEMORY, f)
       update.message.reply_text(users)
       update.message.reply_text("\n\n".join(
         [f"{n+1}) {IDS[str(key)]}\n\
