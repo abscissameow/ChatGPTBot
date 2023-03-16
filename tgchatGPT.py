@@ -22,7 +22,7 @@ def contains_russian(text):
     if i in RUSSIAN:
       return True
   return False
-if not os.path.exists('/temp'): os.makedirs("/temp")
+if not os.path.exists('./temp'): os.makedirs("./temp")
 
 # MEMORY dict to save states of users to switch img/chat regimes and to store chat memory
 MEMORY = {}
