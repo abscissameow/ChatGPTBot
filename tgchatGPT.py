@@ -139,7 +139,7 @@ def handleAudio(update: Update, context: CallbackContext):
       update.message.reply_text(GPTimg(prompt))
 
     else: # voice
-      gTTS(update.message.reply_text(_handle_memory_chat(chat_id, prompt+"\nОтветь на русском языке")),
+      gTTS(_handle_memory_chat(chat_id, prompt+"\nОтветь на русском языке"),
            lang='ru', slow=False, lang_check=False).save(tempPath)    # generate voice response
       with open(tempPath, 'rb') as fp: update.message.reply_voice(fp) # reply voice
       os.remove(tempPath) # remove temp file
