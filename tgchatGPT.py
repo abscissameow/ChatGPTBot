@@ -8,7 +8,11 @@ from gtts import gTTS
 from pydub import AudioSegment
 
 # insert corresponding tokens in terminal like that: python3 tgchatGPT.py token1 token2 IDS_path
-openai.api_key, TOKEN, IDS_path = sys.argv[1:4]
+openai.api_key, TOKEN = sys.argv[1:3]
+DIR_path    = os.path.dirname(os.path.abspath(__file__))
+IDS_path    = DIR_path + "/IDS.json"
+TEMP_path   = DIR_path + "/temp"
+MEMORY_path = DIR_path + "/MEMORY.txt"
 
 # CONSTS
 DEFAULT_DICT    = {'state':'chat', 'a':list(), 'q':list()}
@@ -16,24 +20,21 @@ MEMORY_REQUESTS = 7
 MAX_TOKENS = 2800
 MYID, HERID = 283460642, 284672038
 GODS = {MYID : "к вашим услугам, господин", HERID : "пупсопривив"}
-if not os.path.exists('./temp'): os.makedirs("./temp")
+if not os.path.exists(TEMP_path): os.makedirs(TEMP_path)
 
 # MEMORY dict to save states of users to switch img/chat regimes and to store chat memory
 MEMORY = {}
-if os.path.exists('temp/MEMORY.txt'): os.remove('temp/MEMORY.txt')
+if os.path.exists(MEMORY_path): os.remove(MEMORY_path)
 
 # IDS
 if not os.path.exists(IDS_path):
-  with open(IDS_path, 'w+') as fp:
-    json.dump({}, fp)
-with open(IDS_path, 'r') as fp:
-  IDS = json.load(fp)
+  with open(IDS_path, 'w+') as fp: json.dump({}, fp)
+with open(IDS_path, 'r') as fp: IDS = json.load(fp)
 def fill(chat_id, username):
   if username not in IDS:
     IDS[str(username)] = chat_id
     IDS[str(chat_id) ] = str(username)
-    with open(IDS_path, 'w+') as fp:
-      json.dump(IDS, fp)
+    with open(IDS_path, 'w+') as fp: json.dump(IDS, fp)
   if chat_id not in MEMORY:
     MEMORY[chat_id] = deepcopy(DEFAULT_DICT)
   
@@ -117,7 +118,7 @@ def handleAudio(update: Update, context: CallbackContext):
     chat_id = update.message.chat_id
     fill(chat_id, update.message.from_user.username)
 
-    tempPath = f'temp/{chat_id}.mp3'
+    tempPath = TEMP_path + f'/{chat_id}.mp3'
     if not os.path.exists(tempPath): 
       with open(tempPath, 'w'): pass # create temp file
     update.message.voice.get_file().download(tempPath) # get .ogg voice file
@@ -146,7 +147,7 @@ def void(update: Update, context: CallbackContext) -> None:
   if update.message.chat_id in GODS:
     global MEMORY
     MEMORY = {}
-    if os.path.exists('temp/MEMORY.json'): os.remove('temp/MEMORY.json')
+    if os.path.exists(MEMORY_path): os.remove(MEMORY_path)
     update.message.reply_text('души свободны')
   else:
     update.message.reply_text('ты не обладаешь этой силой')
@@ -156,7 +157,7 @@ def get(update: Update, context: CallbackContext) -> None:
     if not users:
       update.message.reply_text('одиноко...')
     else:
-      with open('temp/MEMORY.txt', 'w+') as f: f.write(str(MEMORY))
+      with open(MEMORY_path, 'w+') as f: f.write(str(MEMORY))
       update.message.reply_text(users)
       update.message.reply_text("\n\n".join(
         [f"{n+1}) {IDS[str(key)]}\n\
