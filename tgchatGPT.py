@@ -4,6 +4,8 @@ from telegram.ext import CallbackContext, CommandHandler, Updater, MessageHandle
 import sys, os
 import json
 from copy import deepcopy
+from gtts import gTTS
+from pydub import AudioSegment
 
 # insert corresponding tokens in terminal like that: python3 tgchatGPT.py token1 token2 IDS_path
 openai.api_key, TOKEN, IDS_path = sys.argv[1:4]
@@ -14,6 +16,13 @@ MEMORY_REQUESTS = 7
 MAX_TOKENS = 2800
 MYID, HERID = 283460642, 284672038
 GODS = {MYID : "к вашим услугам, господин", HERID : "пупсопривив"}
+RUSSIAN = set([chr(ord('а')+i) for i in range(32)])
+def contains_russian(text):
+  for i in text:
+    if i in RUSSIAN:
+      return True
+  return False
+if not os.path.exists('/temp'): os.makedirs("/temp")
 
 # MEMORY dict to save states of users to switch img/chat regimes and to store chat memory
 MEMORY = {}
@@ -72,12 +81,23 @@ def chat(update: Update, context: CallbackContext) -> None:
   MEMORY[chat_id]['state'] = 'chat'
   update.message.reply_text('чатб: ON')
 
+
 def _cap_memory(id):
   T = len(''.join(MEMORY[id]['q']+MEMORY[id]['a']).split())
   if len(MEMORY[id]['q']) >= MEMORY_REQUESTS or T > MAX_TOKENS:
     MEMORY[id]['a'].pop(0)
     MEMORY[id]['q'].pop(0)
     _cap_memory(id)
+
+def _handle_memory_chat(chat_id, text):
+  _cap_memory(chat_id)
+  prompt = '\n'.join([i for j in zip(MEMORY[chat_id]['q'],MEMORY[chat_id]['a'])\
+                        for i in j]) + '\n' + text
+  answer = GPTchat(prompt)
+  MEMORY[chat_id]['q'].append(text)
+  MEMORY[chat_id]['a'].append(answer)
+  return answer
+
 # handler for any text
 def handleGPT(update: Update, context: CallbackContext):
   try:
@@ -91,18 +111,37 @@ def handleGPT(update: Update, context: CallbackContext):
       
     # using GPT chat api
     else:
-      _cap_memory(chat_id)
-      prompt = '\n'.join([i for j in zip(MEMORY[chat_id]['q'],MEMORY[chat_id]['a'])\
-                            for i in j]) + '\n' + msg
-      answer = GPTchat(prompt)
-      MEMORY[chat_id]['q'].append(msg)
-      MEMORY[chat_id]['a'].append(answer)
-      update.message.reply_text(answer)
+      update.message.reply_text(_handle_memory_chat(chat_id, msg))
 
   except Exception as e:
     update.message.reply_text('я сломалосб:\n' + str(e))
 
-# auxikiary staff
+# handle voice files
+def handleAudio(update: Update, context: CallbackContext):
+  try:
+    chat_id = update.message.chat_id
+    fill(chat_id, update.message.from_user.username)
+    tempPath = f'temp/{chat_id}.mp3'
+
+    if not os.path.exists(tempPath): 
+      with open(tempPath, 'w'): pass
+    update.message.voice.get_file().download(tempPath)
+    # convert .ogg to .mp3:
+    AudioSegment.from_ogg(tempPath).export(tempPath, format="mp3")
+    with open(tempPath, 'rb') as fp: text = openai.Audio.translate("whisper-1", fp)['text']
+    # determine language (default rus)
+    isrus = not MEMORY[chat_id]['q'] or contains_russian(MEMORY[chat_id]['q'][-1])
+    if isrus: text += "\nОтветь на русском языке"
+    answer = _handle_memory_chat(chat_id, text)
+    # generate voice response
+    gTTS(answer, lang='ru' if isrus else 'en').save(tempPath)
+    # reply voice and remove temporary file
+    with open(tempPath, 'rb') as fp: update.message.reply_voice(fp)
+    os.remove(tempPath)
+  except Exception as e:
+    update.message.reply_text('я сломалосб:\n' + str(e))
+
+# debug staff
 def void(update: Update, context: CallbackContext) -> None:
   if update.message.chat_id in GODS:
     global MEMORY
@@ -138,7 +177,8 @@ handlers = [
   CommandHandler('void', void),
   CommandHandler('get', get),
   CommandHandler('send', send),
-  MessageHandler(Filters.all, handleGPT),
+  MessageHandler(Filters.text, handleGPT),
+  MessageHandler(Filters.voice, handleAudio),
 ]
 updater = Updater(TOKEN, workers=100)
 for handler in handlers:
