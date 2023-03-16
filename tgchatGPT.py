@@ -125,19 +125,18 @@ def handleAudio(update: Update, context: CallbackContext):
 
     if not os.path.exists(tempPath): 
       with open(tempPath, 'w'): pass
-    update.message.voice.get_file().download(tempPath)
-    # convert .ogg to .mp3:
-    AudioSegment.from_ogg(tempPath).export(tempPath, format="mp3")
-    with open(tempPath, 'rb') as fp: text = openai.Audio.translate("whisper-1", fp)['text']
-    # determine language (default rus)
-    isrus = not MEMORY[chat_id]['q'] or contains_russian(MEMORY[chat_id]['q'][-1])
-    if isrus: text += "\nОтветь на русском языке"
+    update.message.voice.get_file().download(tempPath) # get .ogg
+    AudioSegment.from_ogg(tempPath).export(tempPath, format="mp3") # convert .ogg to .mp3:
+    with open(tempPath, 'rb') as fp: # .mp3 to (en) text
+      text = openai.Audio.translate("whisper-1", fp)['text'] + "\nОтветь на русском языке"
+    
     answer = _handle_memory_chat(chat_id, text)
-    # generate voice response
-    gTTS(answer, lang='ru' if isrus else 'en').save(tempPath)
-    # reply voice and remove temporary file
-    with open(tempPath, 'rb') as fp: update.message.reply_voice(fp)
-    os.remove(tempPath)
+    if text.split()[0].lower() in ['write', 'print', 'type']: # if user wants to get text reply:
+      update.message.reply_text(answer)
+    else:
+      gTTS(answer, lang='ru').save(tempPath) # generate voice response
+      with open(tempPath, 'rb') as fp: update.message.reply_voice(fp) # reply voice
+      os.remove(tempPath)
   except Exception as e:
     update.message.reply_text('я сломалосб:\n' + str(e))
 
