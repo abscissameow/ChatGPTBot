@@ -16,7 +16,7 @@ pip install openai telegram pydub gtts
 
 To use the code, you will need to have a Telegram bot **token** and an OpenAI API **key**. Once you have these, you can insert them into the python3 tgchatGPT.py command in your terminal like this:
 ```php
-python3 tgchatGPT.py <OpenAI API key> <Telegram bot token>
+python3 tgchatGPT.py <OpenAI API key> <Telegram Bot token>
 ```
 
 ## Usage
