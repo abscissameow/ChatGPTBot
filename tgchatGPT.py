@@ -7,7 +7,7 @@ from copy import deepcopy
 from gtts import gTTS
 from pydub import AudioSegment
 
-# insert corresponding tokens in terminal like that: python3 tgchatGPT.py token1 token2 IDS_path
+# insert corresponding tokens in terminal like that: python3 tgchatGPT.py token1 token2
 openai.api_key, TOKEN = sys.argv[1:3]
 DIR_path    = os.path.dirname(os.path.abspath(__file__))
 IDS_path    = DIR_path + "/IDS.json"
