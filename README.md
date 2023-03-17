@@ -15,7 +15,7 @@ pip install openai telegram pydub gtts
 ```
 
 To use the code, you will need to have a Telegram bot **token** and an OpenAI API **key**. Once you have these, you can insert them into the python3 tgchatGPT.py command in your terminal like this:
-```bash
+```php
 python3 tgchatGPT.py <OpenAI API key> <Telegram bot token>
 ```
 
@@ -33,7 +33,7 @@ When the bot is in image mode, it will attempt to generate an image in response 
 In addition to text messages, the bot can also handle **voice** files. If you send a voice message to the bot, it will convert it to text using OpenAI's Whisper API and then pass the text to the GPT or DALL-E API (depending on the first word spoken: **write**, **draw**, or without) to generate a response.
 
 ### P.S.
-~~`this README.md file was generated using ChatGPT Telegram Bot`~~
+~~this README.md file was generated using ChatGPT Telegram Bot~~
 
 
 
