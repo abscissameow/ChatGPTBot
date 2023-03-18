@@ -9,34 +9,25 @@ from pydub import AudioSegment
 
 # insert corresponding tokens in terminal like that: python3 tgchatGPT.py token1 token2
 openai.api_key, TOKEN = sys.argv[1:3]
-DIR_path    = os.path.dirname(os.path.abspath(__file__))
-IDS_path    = DIR_path + "/IDS.json"
-TEMP_path   = DIR_path + "/temp"
-MEMORY_path = DIR_path + "/MEMORY.txt"
 
-# CONSTS
+# create/fill data
+DIR_path    = os.path.dirname(os.path.abspath(__file__))
+DATA_path   = DIR_path + "/data"
+IDS_path    = DATA_path + "/IDS.json"
+MEMORY_path = DATA_path + "/MEMORY.json"
+if not os.path.exists(DATA_path): os.makedirs(DATA_path)
+if not os.path.exists(IDS_path): 
+  with open(IDS_path,    'w+') as f: json.dump({}, f)
+  with open(MEMORY_path, 'w+') as f: json.dump({}, f)
+with open(IDS_path,    'r') as f: IDS    = json.load(f)
+with open(MEMORY_path, 'r') as f: MEMORY = json.load(f)
+
+# CONSTANTS
 DEFAULT_DICT    = {'state':'chat', 'a':list(), 'q':list()}
 MEMORY_REQUESTS = 7
 MAX_TOKENS = 2800
 MYID, HERID = 283460642, 284672038
-GODS = {MYID : "к вашим услугам, господин", HERID : "пупсопривив"}
-if not os.path.exists(TEMP_path): os.makedirs(TEMP_path)
-
-# MEMORY dict to save states of users to switch img/chat regimes and to store chat memory
-MEMORY = {}
-if os.path.exists(MEMORY_path): os.remove(MEMORY_path)
-
-# IDS
-if not os.path.exists(IDS_path):
-  with open(IDS_path, 'w+') as fp: json.dump({}, fp)
-with open(IDS_path, 'r') as fp: IDS = json.load(fp)
-def fill(chat_id, username):
-  if username not in IDS:
-    IDS[str(username)] = chat_id
-    IDS[str(chat_id) ] = str(username)
-    with open(IDS_path, 'w+') as fp: json.dump(IDS, fp)
-  if chat_id not in MEMORY:
-    MEMORY[chat_id] = deepcopy(DEFAULT_DICT)
+GODS = {MYID : "おはよう　おもさま", HERID : "おはよう むすび　ちゃん"}
   
 # GPT chat api implementation
 def GPTchat(prompt):
@@ -54,26 +45,32 @@ def GPTimg(prompt):
     n=1,
     size="1024x1024")['data'][0]['url']
 
+# save user's data to memory
+def _fill(chat_id, username):
+  if username not in IDS:
+    IDS[str(username)] = chat_id
+    IDS[str(chat_id) ] = str(username)
+    with open(IDS_path, 'w+') as fp: json.dump(IDS, fp)
+  if chat_id not in MEMORY: MEMORY[chat_id] = deepcopy(DEFAULT_DICT)
+
 # /start command
 def start_command(update: Update, context: CallbackContext) -> None:
   chat_id  = update.message.chat_id
-  fill(chat_id, update.message.from_user.username)
-  if chat_id in GODS:
-    update.message.reply_text(GODS[chat_id])
-  else:
-    update.message.reply_text('ну, чего тебе?')
+  _fill(chat_id, update.message.from_user.username)
+  if chat_id in GODS: update.message.reply_text(GODS[chat_id])
+  else:               update.message.reply_text('おはよう　ともだち!')
 
 # /img command
 def img(update: Update, context: CallbackContext) -> None:
   chat_id  = update.message.chat_id 
-  fill(chat_id, update.message.from_user.username)
+  _fill(chat_id, update.message.from_user.username)
   MEMORY[chat_id]['state'] = 'img'
   update.message.reply_text('рисоватб: ON')
 
 # /chat command
 def chat(update: Update, context: CallbackContext) -> None:
   chat_id = update.message.chat_id
-  fill(chat_id, update.message.from_user.username)
+  _fill(chat_id, update.message.from_user.username)
   MEMORY[chat_id]['state'] = 'chat'
   update.message.reply_text('чатб: ON')
 
@@ -99,7 +96,7 @@ def handleGPT(update: Update, context: CallbackContext):
   try:
     chat_id = update.message.chat_id
     msg     = update.message.text.lower()
-    fill(chat_id, update.message.from_user.username)
+    _fill(chat_id, update.message.from_user.username)
 
     # using GPT image api
     if MEMORY[chat_id]['state'] == 'img':
@@ -116,14 +113,16 @@ def handleGPT(update: Update, context: CallbackContext):
 def handleAudio(update: Update, context: CallbackContext):
   try:
     chat_id = update.message.chat_id
-    fill(chat_id, update.message.from_user.username)
+    _fill(chat_id, update.message.from_user.username)
 
-    tempPath = TEMP_path + f'/{chat_id}.mp3'
-    if not os.path.exists(tempPath): 
-      with open(tempPath, 'w'): pass # create temp file
-    update.message.voice.get_file().download(tempPath) # get .ogg voice file
-    AudioSegment.from_ogg(tempPath).export(tempPath, format="mp3") # convert .ogg to .mp3:
-    with open(tempPath, 'rb') as fp: prompt = openai.Audio.translate("whisper-1", fp)['text']
+    temp_path = DATA_path + f'/{chat_id}.mp3'
+    with open(temp_path, 'w+'): pass # create temp file
+
+    update.message.voice.get_file().download(temp_path) # get .ogg voice file
+    AudioSegment.from_ogg(temp_path).export(temp_path, format="mp3") # convert .ogg to .mp3
+
+    with open(temp_path, 'rb') as fp: 
+      prompt = openai.Audio.translate("whisper-1", fp)['text'] # response
 
     # reply with text/pic/voice depending on first_word:
     first_word = prompt.split()[0].lower()
@@ -136,51 +135,55 @@ def handleAudio(update: Update, context: CallbackContext):
 
     else: # voice
       gTTS(_handle_memory_chat(chat_id, prompt+"\nОтветь на русском языке"),
-           lang='ru', slow=False, lang_check=False).save(tempPath)    # generate voice response
-      with open(tempPath, 'rb') as fp: update.message.reply_voice(fp) # reply voice
-      os.remove(tempPath) # remove temp file
+           lang='ru', slow=False, lang_check=False).save(temp_path)    # generate voice response
+      with open(temp_path, 'rb') as fp: update.message.reply_voice(fp) # reply voice
+      os.remove(temp_path) # remove temp file
   except Exception as e:
     update.message.reply_text('я сломалосб:\n' + str(e))
 
+
 # debug staff
-def void(update: Update, context: CallbackContext) -> None:
+def _void(update: Update, context: CallbackContext) -> None: # erase data
   if update.message.chat_id in GODS:
     global MEMORY
     MEMORY = {}
     if os.path.exists(MEMORY_path): os.remove(MEMORY_path)
-    update.message.reply_text('души свободны')
+    update.message.reply_text('しんでいる')
   else:
-    update.message.reply_text('ты не обладаешь этой силой')
-def get(update: Update, context: CallbackContext) -> None:
+    _fill(update.message.chat_id, update.message.from_user.username)
+    update.message.reply_text('NOT ALLOWED')
+
+def _get(update: Update, context: CallbackContext) -> None: 
   if update.message.chat_id in GODS:
     users = '\n'.join([IDS[str(key)]+' : '+str(len(MEMORY[key]['q'])) for key in MEMORY])
     if not users:
-      update.message.reply_text('одиноко...')
+      update.message.reply_text('empty')
     else:
-      with open(MEMORY_path, 'w+') as f: f.write(str(MEMORY))
+      with open(MEMORY_path, 'w+') as f: json.dump(MEMORY, f)
       update.message.reply_text(users)
       update.message.reply_text("\n\n".join(
         [f"{n+1}) {IDS[str(key)]}\n\
         {(MEMORY[key]['q'][-1] if MEMORY[key]['q'] else None)}"[:4096//len(MEMORY)]\
         for n,key in enumerate(MEMORY)]))
   else:
-    update.message.reply_text('ты не обладаешь этой силой')
-def send(update: Update, context: CallbackContext) -> None:
+    update.message.reply_text('NOT ALLOWED')
+
+def _send(update: Update, context: CallbackContext) -> None: # send message
   if update.message.chat_id in GODS:
     _, username, msg = update.message.text.split(' ', 2)
     Bot(token=TOKEN).send_message(chat_id = IDS[username], text = msg)
   else:
-    update.message.reply_text('ты не обладаешь этой силой')
+    update.message.reply_text('NOT ALLOWED')
 
 # put all together and start pooling
 handlers = [
   CommandHandler('start', start_command),
-  CommandHandler('chat', chat),
-  CommandHandler('img', img),
-  CommandHandler('void', void),
-  CommandHandler('get', get),
-  CommandHandler('send', send),
-  MessageHandler(Filters.text, handleGPT),
+  CommandHandler('chat',  chat),
+  CommandHandler('img',   img),
+  CommandHandler('void', _void),
+  CommandHandler('get',  _get),
+  CommandHandler('send', _send),
+  MessageHandler(Filters.text,  handleGPT),
   MessageHandler(Filters.voice, handleAudio),
 ]
 updater = Updater(TOKEN, workers=100)
