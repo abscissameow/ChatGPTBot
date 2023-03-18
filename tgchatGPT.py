@@ -16,10 +16,13 @@ DATA_path   = DIR_path + "/data"
 IDS_path    = DATA_path + "/IDS.json"
 MEMORY_path = DATA_path + "/MEMORY.json"
 if not os.path.exists(DATA_path): os.makedirs(DATA_path)
+for item in os.listdir(DATA_path):
+  if item not in IDS_path: os.remove(DATA_path + '/' + item)
 if not os.path.exists(IDS_path): 
   with open(IDS_path,    'w+') as f: json.dump({}, f)
-  with open(MEMORY_path, 'w+') as f: json.dump({}, f)
 with open(IDS_path,    'r') as f: IDS    = json.load(f)
+if not os.path.exists(MEMORY_path): 
+  with open(MEMORY_path, 'w+') as f: json.dump({}, f)
 with open(MEMORY_path, 'r') as f: MEMORY = json.load(f)
 
 # CONSTANTS
@@ -147,7 +150,8 @@ def _void(update: Update, context: CallbackContext) -> None: # erase data
   if update.message.chat_id in GODS:
     global MEMORY
     MEMORY = {}
-    if os.path.exists(MEMORY_path): os.remove(MEMORY_path)
+    for item in os.listdir(DATA_path):
+      if item not in IDS_path: os.remove(DATA_path + '/' + item)
     update.message.reply_text('しんでいる')
   else:
     _fill(update.message.chat_id, update.message.from_user.username)
