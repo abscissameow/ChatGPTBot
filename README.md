@@ -11,7 +11,7 @@ This is a Python script that uses OpenAI's GPT-3 API and Telegram's Bot API to c
 ## Getting Started
 Install dependences using pip:
 ```bash
-pip install openai telegram pydub gtts
+pip install openai python-telegram-bot==13.7 pydub gtts
 ```
 
 To use the code, you will need to have a Telegram bot **token** and an OpenAI API **key**. Once you have these, you can insert them into the python3 tgchatGPT.py command in your terminal like this:
