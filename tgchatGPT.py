@@ -6,7 +6,6 @@ import json
 from copy import deepcopy
 from gtts import gTTS
 from pydub import AudioSegment
-import signal, time
 
 # insert corresponding tokens in terminal like that: python3 tgchatGPT.py token1 token2
 openai.api_key, TOKEN = sys.argv[1:3]
@@ -32,7 +31,6 @@ MEMORY_REQUESTS = 7
 MAX_TOKENS = 2800
 MYID, HERID = 283460642, 284672038
 GODS = {MYID : "おはよう　おもさま", HERID : "おはよう むすび　ちゃん"}
-TIMEOUT = 90
   
 # GPT chat api implementation
 def GPTchat(prompt):
@@ -96,16 +94,9 @@ def _handle_memory_chat(chat_id, text):
   MEMORY[chat_id]['a'].append(answer)
   return answer
 
-def _timeout_handler(signum, frame):
-  raise Exception("Timeout for response (max = 60 sec)")
-
 # handler for any text
 def handleGPT(update: Update, context: CallbackContext):
   try:
-    
-    signal.signal(signal.SIGALRM, _timeout_handler)
-    signal.alarm(TIMEOUT) # set the alarm for 90 seconds
-
     chat_id = update.message.chat_id
     msg     = update.message.text.lower()
     _fill(chat_id, update.message.from_user.username)
@@ -117,18 +108,12 @@ def handleGPT(update: Update, context: CallbackContext):
     # using GPT chat api
     else:
       update.message.reply_text(_handle_memory_chat(chat_id, msg))
-    
-    signal.alarm(0) # turn off alarm
-
   except Exception as e:
     update.message.reply_text('я сломалосб:\n' + str(e))
 
 # handle voice files
 def handleAudio(update: Update, context: CallbackContext):
   try:
-    signal.signal(signal.SIGALRM, _timeout_handler)
-    signal.alarm(TIMEOUT) # set the alarm for 90 seconds
-
     chat_id = update.message.chat_id
     _fill(chat_id, update.message.from_user.username)
 
@@ -155,8 +140,6 @@ def handleAudio(update: Update, context: CallbackContext):
            lang='ru', slow=False, lang_check=False).save(temp_path)    # generate voice response
       with open(temp_path, 'rb') as fp: update.message.reply_voice(fp) # reply voice
       os.remove(temp_path) # remove temp file
-    
-    signal.alarm(0) # turn off alarm
   except Exception as e:
     update.message.reply_text('я сломалосб:\n' + str(e))
 
@@ -195,12 +178,6 @@ def _send(update: Update, context: CallbackContext) -> None: # send message
   else:
     update.message.reply_text('NOT ALLOWED')
 
-def _sleep(update: Update, context: CallbackContext) -> None: # sleep
-  if update.message.chat_id in GODS:
-    time.sleep(int(update.message.text))
-  else:
-    update.message.reply_text('NOT ALLOWED')
-
 # put all together and start pooling
 handlers = [
   CommandHandler('start', start_command),
@@ -209,7 +186,6 @@ handlers = [
   CommandHandler('void', _void),
   CommandHandler('get',  _get),
   CommandHandler('send', _send),
-  CommandHandler('sleep', _sleep),
   MessageHandler(Filters.text,  handleGPT),
   MessageHandler(Filters.voice, handleAudio),
 ]
