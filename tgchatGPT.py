@@ -103,7 +103,12 @@ def handleGPT(update: Update, context: CallbackContext):
 
     # using GPT image api
     if MEMORY[chat_id]['state'] == 'img':
-      update.message.reply_text(GPTimg(msg))
+      # if first token of msg is integer then make this number of replies:
+      n, text = msg.split(' ', 1)
+      if n.isdigit():
+        for i in range(int(n)):
+          update.message.reply_text(f"{i+1}/{n}\n"+GPTimg(text))
+      else: update.message.reply_text(GPTimg(msg))
       
     # using GPT chat api
     else:
