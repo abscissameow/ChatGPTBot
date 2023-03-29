@@ -7,6 +7,8 @@ from copy import deepcopy
 from gtts import gTTS
 from pydub import AudioSegment
 
+DEBUG = False
+
 # insert corresponding tokens in terminal like that: python3 tgchatGPT.py token1 token2
 openai.api_key, TOKEN = sys.argv[1:3]
 
@@ -148,6 +150,16 @@ def handleAudio(update: Update, context: CallbackContext):
   except Exception as e:
     update.message.reply_text('я сломалосб:\n' + str(e))
 
+# clear user memory:
+def clear(update: Update, context: CallbackContext) -> None:
+  try:
+    chat_id = update.message.chat_id
+    username = update.message.from_user.username
+    _fill(chat_id, username)
+    MEMORY.pop(chat_id)
+    update.message.reply_text('всё чисто')
+  except Exception as e:
+    update.message.reply_text('я сломалосб:\n' + str(e))
 
 # debug staff
 def _void(update: Update, context: CallbackContext) -> None: # erase data
@@ -163,23 +175,25 @@ def _void(update: Update, context: CallbackContext) -> None: # erase data
 
 def _get(update: Update, context: CallbackContext) -> None: 
   if update.message.chat_id in GODS:
-    users = '\n'.join([IDS[str(key)]+' : '+str(len(MEMORY[key]['q'])) for key in MEMORY])
-    if not users:
-      update.message.reply_text('empty')
-    else:
-      with open(MEMORY_path, 'w+') as f: json.dump(MEMORY, f)
-      update.message.reply_text(users)
-      update.message.reply_text("\n\n".join(
-        [f"{n+1}) {IDS[str(key)]}\n\
-        {(MEMORY[key]['q'][-1] if MEMORY[key]['q'] else None)}"[:4096//len(MEMORY)]\
-        for n,key in enumerate(MEMORY)]))
+    if DEBUG:
+      users = '\n'.join([IDS[str(key)]+' : '+str(len(MEMORY[key]['q'])) for key in MEMORY])
+      if not users:
+        update.message.reply_text('empty')
+      else:
+        with open(MEMORY_path, 'w+') as f: json.dump(MEMORY, f)
+        update.message.reply_text(users)
+        update.message.reply_text("\n\n".join(
+          [f"{n+1}) {IDS[str(key)]}\n\
+          {(MEMORY[key]['q'][-1] if MEMORY[key]['q'] else None)}"[:4096//len(MEMORY)]\
+          for n,key in enumerate(MEMORY)]))
   else:
     update.message.reply_text('NOT ALLOWED')
 
 def _send(update: Update, context: CallbackContext) -> None: # send message
   if update.message.chat_id in GODS:
-    _, username, msg = update.message.text.split(' ', 2)
-    Bot(token=TOKEN).send_message(chat_id = IDS[username], text = msg)
+    if DEBUG:
+      _, username, msg = update.message.text.split(' ', 2)
+      Bot(token=TOKEN).send_message(chat_id = IDS[username], text = msg)
   else:
     update.message.reply_text('NOT ALLOWED')
 
@@ -188,6 +202,7 @@ handlers = [
   CommandHandler('start', start_command),
   CommandHandler('chat',  chat),
   CommandHandler('img',   img),
+  CommandHandler('clear', clear),
   CommandHandler('void', _void),
   CommandHandler('get',  _get),
   CommandHandler('send', _send),
