@@ -161,6 +161,25 @@ def clear(update: Update, context: CallbackContext) -> None:
   except Exception as e:
     update.message.reply_text('я сломалосб:\n' + str(e))
 
+# help command
+def help(update: Update, context: CallbackContext):
+  chat_id = update.message.chat_id
+  username = update.message.from_user.username
+  _fill(chat_id, username)
+  Help = '''\
+1. /chat - режим чата
+2. /pic - режим картинок
+3. /clear - очищает память для режима чата
+4. аудиосообщения:
+  a) если первое слово в аудио "нарисуй", то оно нарисует
+  b) если первое слово в аудио "напиши", то ответит текстом
+  c) иначе: пришлет сгенерированное аудиосообщение
+  
+больше help:  
+  https://github.com/abscissameow/ChatGPTBot
+  '''
+  update.message.reply_text(Help)
+
 # debug staff
 def _void(update: Update, context: CallbackContext) -> None: # erase data
   if update.message.chat_id in GODS:
@@ -203,6 +222,7 @@ handlers = [
   CommandHandler('chat',  chat),
   CommandHandler('img',   img),
   CommandHandler('clear', clear),
+  CommandHandler('help', help),
   CommandHandler('void', _void),
   CommandHandler('get',  _get),
   CommandHandler('send', _send),

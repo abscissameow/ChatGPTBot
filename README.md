@@ -25,6 +25,8 @@ Once the script is running, you can interact with the bot using Telegram. The fo
 - `/start` - Initializes the bot and provides a welcome message.
 - `/chat` - Switches the bot to chat mode, where it will generate text in response to user input.
 - `/img` - Switches the bot to image mode, where it will generate images in response to user input.
+- `/clear` - Clears user's memory.
+- `/help` - Help.
 
 When the bot is in chat mode, it will attempt to generate a response to any text message it receives using OpenAI's GPT API. The bot will remember the last 7 conversation turns and will incorporate them into its response to provide context.
 
